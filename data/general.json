@@ -11,7 +11,7 @@
         "temperature": {
             "dip_setpoints": [
                 {
-                    "value": 0,
+                    "value": 22,
                     "unit": "C",
                     "set_time": "11/19/2025 11:20"
                 },
@@ -26,7 +26,7 @@
                     "set_time": "11/24/2025 13:45"
                 },
                 {
-                    "value": 0,
+                    "value": 22,
                     "unit": "C",
                     "set_time": "11/25/2025 11:30"
                 },
@@ -51,9 +51,9 @@
                     "set_time": "11/29/2025 11:28"
                 },
                 {
-                    "value": 0,
+                    "value": 22,
                     "unit": "C",
-                    "set_time": "12/6/2025 10:30"
+                    "set_time": "12/06/2025 05:58"
                 },
                 {
                     "value": 400,
@@ -345,20 +345,20 @@
                 "planned_sample_time": "11/21/2025 11:20",
                 "actual_sample_time": "11/21/2025 13:45",
                 "lsc_vials_filenames": {
-                    "1": "1L-FLB_IV_1-3_AND_IV_1-1_1-2_RE.csv",
-                    "2": "1L-FLB_IV_1-3_AND_IV_1-1_1-2_RE.csv",
-                    "3": "1L-FLB_IV_1-3_AND_IV_1-1_1-2_RE.csv",
-                    "4": "1L-FLB_IV_1-3_AND_IV_1-1_1-2_RE.csv"
+                    "1": "1L-FLB_IV_1-1.csv",
+                    "2": "1L-FLB_IV_1-1.csv",
+                    "3": "1L-FLB_IV_1-1.csv",
+                    "4": "1L-FLB_IV_1-1.csv"
                 }
             },
             "2": {
                 "planned_sample_time": "11/22/2025 11:20",
                 "actual_sample_time": "11/22/2025 13:25",
                 "lsc_vials_filenames": {
-                    "1": "1L-FLB_IV_1-3_AND_IV_1-1_1-2_RE.csv",
-                    "2": "1L-FLB_IV_1-3_AND_IV_1-1_1-2_RE.csv",
-                    "3": "1L-FLB_IV_1-3_AND_IV_1-1_1-2_RE.csv",
-                    "4": "1L-FLB_IV_1-3_AND_IV_1-1_1-2_RE.csv"
+                    "1": "1L-FLB_IV_1-2_OV_1-1.csv",
+                    "2": "1L-FLB_IV_1-2_OV_1-1.csv",
+                    "3": "1L-FLB_IV_1-2_OV_1-1.csv",
+                    "4": "1L-FLB_IV_1-2_OV_1-1.csv"
                 }
             },
             "3": {
