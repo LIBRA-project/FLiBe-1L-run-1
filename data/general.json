@@ -189,11 +189,12 @@
         "foils": {
             "enabled": true,
             "position": "on generators, at target plane, facing top and bottom",
-            "data_url": {
+            "data_url": {"HPGe": "https://zenodo.org/records/17955510/files/251119_1L_BABY_FLiBe_Run1_HPGe.zip?download=1",
                          "NaI": "https://zenodo.org/records/17725532/files/20251119_1L_BABY_FLiBe_Run1_NaI.zip?download=1"},
             "data_directory": {
+                             "HPGe": "251119_1L_BABY_FLiBe_Run1_HPGe/DAQ",
                              "NaI": "20251119_1L_BABY_FLiBe_Run1_NaI/DAQ"},
-            "detector_type": ["NaI"],
+            "detector_type": ["HPGe", "NaI"],
             "materials": [
                 {
                     "position": "Top of generator, furthest from generator face",
@@ -220,6 +221,7 @@
                     },
                     "measurement_directory":{
                         "HPGe": [
+                            "Niobium1_top_count1/UNFILTERED"
                         ],
                         "NaI": [
                             "Niobium1_top_count1/UNFILTERED",
@@ -251,6 +253,7 @@
                     },
                     "measurement_directory":{
                         "HPGe": [
+                            "Niobium2_bottom_count1/UNFILTERED"
                         ],
                         "NaI": [
                             "Niobium2_bottom_count1/UNFILTERED",
@@ -281,6 +284,8 @@
                     },
                     "measurement_directory":{
                         "HPGe": [
+                            "Zirconium2_bottom_count1/UNFILTERED",
+                            "Zirconium2_bottom_count2/UNFILTERED"
                         ],
                         "NaI": [
                             "Zirconium2_bottom_count1/UNFILTERED",
@@ -312,6 +317,7 @@
                     },
                     "measurement_directory":{
                         "HPGe": [
+                            "Zirconium3_top_count1/UNFILTERED"
                         ],
                         "NaI": [
                             "Zirconium3_top_count1/UNFILTERED",
@@ -321,13 +327,13 @@
                 }
             ],
             "background_directory": {
-                "HPGe": null,
+                "HPGe": "Background_count1/UNFILTERED",
                 "NaI": "Background_count1/UNFILTERED"
             },
             "check_sources": {
                 "HPGe": {
                     "Ba133 Count 1": {
-                        "directory": "Ba133_1uCi_2014Mar_count1/UNFILTERED",
+                        "directory": "Ba133_1uCi_Mar2014_count1/UNFILTERED",
                         "nuclide": "Ba133",
                         "activity": {
                             "value": 1.0,
@@ -342,7 +348,7 @@
                         }
                     },
                     "Ba133 Count 2": {
-                        "directory": "Ba133_1uCi_2014Mar_count2/UNFILTERED",
+                        "directory": "Ba133_1uCi_Mar2014_count2/UNFILTERED",
                         "nuclide": "Ba133",
                         "activity": {
                             "value": 1.0,
@@ -356,7 +362,7 @@
                         }
                     },
                     "Co60 Count 1": {
-                        "directory": "Co60_0_872uCi_2014Mar19_count1/UNFILTERED",
+                        "directory": "Co60_0_872uCi_19Mar2014_count1/UNFILTERED",
                         "nuclide": "Co60",
                         "activity": {
                             "value": 0.872,
@@ -371,7 +377,7 @@
                         }
                     },
                     "Co60 Count 2": {
-                        "directory": "Co60_0_872uCi_2014Mar19_count2/UNFILTERED",
+                        "directory": "Co60_0_872uCi_19Mar2014_count2/UNFILTERED",
                         "nuclide": "Co60",
                         "activity": {
                             "value": 0.872,
@@ -386,7 +392,7 @@
                         }
                     },
                     "Cs137 Count 1": {
-                        "directory": "Cs137_9_38uCi_2023Sep29_count1/UNFILTERED",
+                        "directory": "Cs137_9_38uCi_29Sep2023_count1/UNFILTERED",
                         "nuclide": "Cs137",
                         "activity": {
                             "value": 9.38,
@@ -401,7 +407,7 @@
                         }
                     },
                     "Cs137 Count 2": {
-                        "directory": "Cs137_9_38uCi_2023Sep29_count2/UNFILTERED",
+                        "directory": "Cs137_9_38uCi_29Sep2023_count2/UNFILTERED",
                         "nuclide": "Cs137",
                         "activity": {
                             "value": 9.38,
@@ -416,7 +422,7 @@
                         }
                     },
                     "Mn54 Count 1": {
-                        "directory": "Mn54_6_27uCi_2016May2_count1/UNFILTERED",
+                        "directory": "Mn54_6_27uCi_2May2016_count1/UNFILTERED",
                         "nuclide": "Mn54",
                         "activity": {
                             "value": 6.27,
@@ -431,7 +437,7 @@
                         }
                     },
                     "Mn54 Count 2": {
-                        "directory": "Mn54_6_27uCi_2016May2_count2/UNFILTERED",
+                        "directory": "Mn54_6_27uCi_2May2016_count2/UNFILTERED",
                         "nuclide": "Mn54",
                         "activity": {
                             "value": 6.27,
@@ -446,7 +452,7 @@
                         }
                     },
                     "Na22 Count 1": {
-                        "directory": "Na22_9_98uCi_2023Sep29_count1/UNFILTERED",
+                        "directory": "Na22_9_98uCi_29Sep2023_count1/UNFILTERED",
                         "nuclide": "Na22",
                         "activity": {
                             "value": 9.98,
@@ -461,22 +467,7 @@
                         }
                     },
                     "Na22 Count 2": {
-                        "directory": "Na22_9_98uCi_2023Sep29_count2/UNFILTERED",
-                        "nuclide": "Na22",
-                        "activity": {
-                            "value": 9.98,
-                            "unit": "uCi",
-                            "date": "2023-09-29"
-                        },
-                        "energies": null,
-                        "intensities": null,
-                        "half_life": {
-                            "value": null,
-                            "unit": null
-                        }
-                    },
-                    "Na22 Count 3": {
-                        "directory": "Na22_9_98uCi_2023Sep29_count3/UNFILTERED",
+                        "directory": "Na22_9_98uCi_29Sep2023_count2/UNFILTERED",
                         "nuclide": "Na22",
                         "activity": {
                             "value": 9.98,
