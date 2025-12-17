@@ -279,6 +279,7 @@ def get_data(download_from_raw=False, url=None,
     
     # get detector type
     detector_type = json_data.get("detector_type", "NaI")
+    print("detector_type: ", detector_type)
 
     # get measurement directory path
     print(json_data["data_directory"])
