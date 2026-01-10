@@ -268,122 +268,124 @@ def get_foil_source_dict_from_json(json_data: dict, measurement_directory_path: 
 
 
 
-def get_data(download_from_raw=False, url=None,
+def get_data(download_from_raw=False, 
+             data_url=None,
              check_source_dict=None,
              background_dir=None,
              foil_source_dict=None,
-             h5_filename="activation_data.h5"):
+             h5_filename="activation_data.h5",
+             detector_type="NaI"):
     with open("../../data/general.json", "r") as f:
         general_data = json.load(f)
         json_data = general_data["neutron_detection"]["foils"]
     
     # get detector type
-    detector_type = json_data.get("detector_type", "NaI")
-    print("detector_type: ", detector_type)
+    detector_types = json_data.get("detector_type", "NaI")
+    print("detector_type: ", detector_types)
 
+    if not isinstance(detector_types, list):
+        detector_type = [detector_types]
+    
+    if detector_type not in detector_types:
+        raise ValueError(f"Detector type {detector_type} not found in general.json file. Available types: {detector_types}")
+    
+    
     # get measurement directory path
-    print(json_data["data_directory"])
     if isinstance(json_data["data_directory"], dict):
-        print("Multiple measurement directories found.")
-        measurement_directory_path = {}
-        for key, value in json_data["data_directory"].items():
-            measurement_directory_path[key] = activation_foil_path / value
+        if detector_type not in json_data["data_directory"].keys():
+            raise ValueError(f"Detector type {detector_type} not found in data_directory of general.json file. Available types: {json_data['data_directory'].keys()}")
+        measurement_directory_path = activation_foil_path / json_data["data_directory"][detector_type]
     else:
-        measurement_directory_path = {detector_type: activation_foil_path / json_data["data_directory"]}
-    if isinstance(json_data["data_url"], dict):
-        print("Multiple data URLs found.")
-        url_dict = {}
-        for key, value in json_data["data_url"].items():
-            url_dict[key] = value
+        measurement_directory_path = activation_foil_path / json_data["data_directory"]
+
+    # get data download url
+    if isinstance(data_url, str):
+        pass
+    elif isinstance(json_data["data_url"], dict):
+        if detector_type not in json_data["data_url"].keys():
+            raise ValueError(f"Detector type {detector_type} not found in data_url of general.json file. Available types: {json_data['data_url'].keys()}")
+        data_url = json_data["data_url"][detector_type]
     else:
-        url_dict = {detector_type: json_data["data_url"]}
-    all_check_source_measurements = {}
-    all_background_meas = {}
-    all_foil_measurements = {}
-    if not isinstance(detector_type, list):
-        detector_type = [detector_type]
-    for d_type in detector_type:
+        data_url = json_data["data_url"]
 
-        # Get the dictionaries for check sources, background, and foils
-        if check_source_dict is None:
-            print("measurement_directory_path: ", measurement_directory_path)
-            print("key: ", d_type)
-            print("measurement_directory_path[d_type]: ", measurement_directory_path[d_type])
-            check_source_dict = read_check_source_data_from_json(json_data, measurement_directory_path[d_type], key=d_type)
-        if background_dir is None:
-            background_dir = read_background_data_from_json(json_data, measurement_directory_path[d_type], key=d_type)
-        if foil_source_dict is None:
-            foil_source_dict = get_foil_source_dict_from_json(json_data, measurement_directory_path[d_type], key=d_type)
 
-        if download_from_raw:
-            # Download and extract foil data if not already done
-            if url is None:
-                url = url_dict[d_type]
-            download_and_extract_foil_data(url, activation_foil_path)
-            # Process data
-            check_source_measurements, background_meas = read_checksources_from_directory(
-                                            check_source_dict, background_dir
-                                            )
-            foil_measurements = read_foil_measurements_from_dir(foil_source_dict)
+    # Get the dictionaries for check sources, background, and foils
+    if check_source_dict is None:
+        check_source_dict = read_check_source_data_from_json(json_data, measurement_directory_path, key=detector_type)
+    if background_dir is None:
+        background_dir = read_background_data_from_json(json_data, measurement_directory_path, key=detector_type)
+    if foil_source_dict is None:
+        foil_source_dict = get_foil_source_dict_from_json(json_data, measurement_directory_path, key=detector_type)
+    if download_from_raw:
+        # Download and extract foil data if not already done
+        download_and_extract_foil_data(data_url, activation_foil_path, measurement_directory_path)
+        # Process data
+        check_source_measurements, background_meas = read_checksources_from_directory(
+                                        check_source_dict, 
+                                        background_dir, 
+                                        detector_type=detector_type
+                                        )
+        foil_measurements = read_foil_measurements_from_dir(foil_source_dict, 
+                                                            detector_type=detector_type)
 
-            for measurement in check_source_measurements.values():
+        for measurement in check_source_measurements.values():
+            measurement.detector_type = detector_type
+        background_meas.detector_type = detector_type
+        for foil_name in foil_measurements.keys():
+            for measurement in foil_measurements[foil_name]["measurements"].values():
                 measurement.detector_type = detector_type
-            background_meas.detector_type = detector_type
-            for foil_name in foil_measurements.keys():
-                for measurement in foil_measurements[foil_name]["measurements"].values():
-                    measurement.detector_type = detector_type
 
-            # save spectra to h5 for future, faster use
-            print("Saving processed measurements to h5 file for future use...\n", 
-                  activation_foil_path,
-                  d_type + '_' + h5_filename)
-            save_measurements(check_source_measurements,
-                            background_meas,
-                            foil_measurements,
-                            filepath=activation_foil_path / (d_type + '_' + h5_filename))
-        else:
-            # Read measurements from h5 file
-            measurements = Measurement.from_h5(activation_foil_path / (d_type + '_' + h5_filename))
-            foil_measurements = copy.deepcopy(foil_source_dict)
-            check_source_measurements = {}
-            # Get list of foil measurement names
-            foil_measurement_names = []
-            for foil_name in foil_source_dict.keys():
-                for count_num in foil_source_dict[foil_name]["measurement_paths"]:
-                    foil_measurement_names.append(f"{foil_name} Count {count_num}")
+        # save spectra to h5 for future, faster use
+        print("Saving processed measurements to h5 file for future use...\n", 
+                activation_foil_path,
+                detector_type + '_' + h5_filename)
+        save_measurements(check_source_measurements,
+                        background_meas,
+                        foil_measurements,
+                        filepath=activation_foil_path / (detector_type + '_' + h5_filename))
+    else:
+        # Read measurements from h5 file
+        measurements = Measurement.from_h5(activation_foil_path / (detector_type + '_' + h5_filename))
+        foil_measurements = copy.deepcopy(foil_source_dict)
+        check_source_measurements = {}
+        # Get list of foil measurement names
+        foil_measurement_names = []
+        for foil_name in foil_source_dict.keys():
+            for count_num in foil_source_dict[foil_name]["measurement_paths"]:
+                foil_measurement_names.append(f"{foil_name} Count {count_num}")
 
-                # Add empty measurements dictionary to foil_source_dict copy
-                foil_measurements[foil_name]["measurements"] = {}
-                
-            for measurement in measurements:
-                print(f"Processing {measurement.name} from h5 file...")
-                # check if measurement is a check source measurement
-                if measurement.name in check_source_dict.keys():
-                    # May want to change CheckSourceMeasurement in libra-toolbox to make this more seemless
-                    check_source_meas = CheckSourceMeasurement(measurement.name)
-                    check_source_meas.__dict__.update(measurement.__dict__)
-                    check_source_meas.check_source = check_source_dict[measurement.name]["check_source"]
-                    check_source_measurements[measurement.name] = check_source_meas
-                elif measurement.name == "Background":
-                    background_meas = measurement
-                elif measurement.name in  foil_measurement_names:
-                    # Extract foil name and count number from measurement name
-                    split_name = measurement.name.split(' ')
-                    count_num = int(split_name[-1])
-                    foil_name = " ".join(split_name[:-2])
+            # Add empty measurements dictionary to foil_source_dict copy
+            foil_measurements[foil_name]["measurements"] = {}
+            
+        for measurement in measurements:
+            print(f"Processing {measurement.name} from h5 file...")
+            # check if measurement is a check source measurement
+            if measurement.name in check_source_dict.keys():
+                # May want to change CheckSourceMeasurement in libra-toolbox to make this more seemless
+                check_source_meas = CheckSourceMeasurement(measurement.name)
+                check_source_meas.__dict__.update(measurement.__dict__)
+                check_source_meas.check_source = check_source_dict[measurement.name]["check_source"]
+                check_source_meas.detector_type = detector_type
+                check_source_measurements[measurement.name] = check_source_meas
+            elif measurement.name == "Background":
+                background_meas = measurement
+                background_meas.detector_type = detector_type
+            elif measurement.name in  foil_measurement_names:
+                # Extract foil name and count number from measurement name
+                split_name = measurement.name.split(' ')
+                count_num = int(split_name[-1])
+                foil_name = " ".join(split_name[:-2])
 
-                    foil_meas = SampleMeasurement(measurement)
-                    foil_meas.__dict__.update(measurement.__dict__)
-                    foil_meas.foil = foil_source_dict[foil_name]["foil"]
-                    foil_measurements[foil_name]["measurements"][count_num] = foil_meas
-                else:
-                    print(f"Extra measurement included in h5 file: {measurement.name}")
-                measurement.detector_type = detector_type   
-        all_check_source_measurements[d_type] = check_source_measurements
-        all_background_meas[d_type] = background_meas
-        all_foil_measurements[d_type] = foil_measurements
+                foil_meas = SampleMeasurement(measurement)
+                foil_meas.__dict__.update(measurement.__dict__)
+                foil_meas.foil = foil_source_dict[foil_name]["foil"]
+                foil_meas.detector_type = detector_type
+                foil_measurements[foil_name]["measurements"][count_num] = foil_meas
+            else:
+                print(f"Extra measurement included in h5 file: {measurement.name}")
+            measurement.detector_type = detector_type   
         
-    return all_check_source_measurements, all_background_meas, all_foil_measurements
+    return check_source_measurements, background_meas, foil_measurements
 
 
 def save_measurements(check_source_measurements,
@@ -415,7 +417,9 @@ def save_measurements(check_source_measurements,
 
 
 def read_checksources_from_directory(
-    check_source_measurements: dict, background_dir: Path
+    check_source_measurements: dict, 
+    background_dir: Path,
+    detector_type="NaI"
 ):
 
     measurements = {}
@@ -423,6 +427,7 @@ def read_checksources_from_directory(
         print(f"Processing {name}...")
         meas = CheckSourceMeasurement.from_directory(values["directory"], name=name)
         meas.check_source = values["check_source"]
+        meas.detector_type = detector_type
         measurements[name] = meas
 
     print(f"Processing background...")
@@ -431,11 +436,13 @@ def read_checksources_from_directory(
         name="Background",
         info_file_optional=True,
     )
+    background_meas.detector_type = detector_type
     return measurements, background_meas
 
 
 def read_foil_measurements_from_dir(
-    foil_measurements: dict
+    foil_measurements: dict,
+    detector_type="NaI"
 ):
 
     for foil_name in foil_measurements.keys():
@@ -449,6 +456,7 @@ def read_foil_measurements_from_dir(
                 name=measurement_name
             )
             measurement.foil = foil
+            measurement.detector_type = detector_type
             foil_measurements[foil_name]["measurements"][count_num] = measurement
 
     return foil_measurements

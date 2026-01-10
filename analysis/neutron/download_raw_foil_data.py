@@ -3,12 +3,13 @@ import zipfile
 import requests
 
 
-def download_and_extract_foil_data(url: str, extracted_path: Path):
+def download_and_extract_foil_data(url: str, extracted_path: Path,
+                                   measurement_directory_path: Path):
 
     output_filepath = Path("../../data/neutron_detection/foil_data.zip")
 
-    if extracted_path.exists():
-        print(f"Directory already exists: {extracted_path}")
+    if measurement_directory_path.exists():
+        print(f"Directory already exists: {measurement_directory_path}")
     else:
         # URL of the file
 
