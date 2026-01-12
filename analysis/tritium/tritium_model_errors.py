@@ -26,16 +26,18 @@ BACKGROUND_UNCERTAINTY_PERCENT = 20.0  # 20% 2sigma uncertainty on background
 # Confidence interval conversion factors (multiply 1-sigma by these values)
 # All internal calculations use 2sigma (95.45%), then convert to desired confidence level
 CONFIDENCE_INTERVALS = {
-    "68.3%": 1.0,   # 1-sigma
-    "90%": 1.645,   # 1.645-sigma
-    "95%": 1.96,    # 1.96-sigma (commonly used)
+    "68.3%": 1.0,  # 1-sigma
+    "90%": 1.645,  # 1.645-sigma
+    "95%": 1.96,  # 1.96-sigma (commonly used)
     "95.45%": 2.0,  # 2-sigma (internal storage)
-    "99%": 2.576,   # 2.576-sigma
-    "99.7%": 3.0,   # 3-sigma
+    "99%": 2.576,  # 2.576-sigma
+    "99.7%": 3.0,  # 3-sigma
 }
 
 # Set your desired confidence interval here
-DESIRED_CONFIDENCE_INTERVAL = "99.7%"  # Change this to adjust error bar confidence level
+DESIRED_CONFIDENCE_INTERVAL = (
+    "99.7%"  # Change this to adjust error bar confidence level
+)
 
 
 def create_sample(label: str, filename: str, background_curve=None) -> LSCSample:
@@ -65,18 +67,18 @@ def create_sample(label: str, filename: str, background_curve=None) -> LSCSample
 
     # create the sample
     sample = LSCSample.from_file(file_reader, label)
-    
+
     # Read the 2sigma% error from the CSV file (this is on the RAW measurement)
     sample_data = get_row_by_label(file_reader, label)
     two_sigma_percent = float(sample_data["A:2S%"])
-    
+
     # Calculate the absolute error from the RAW activity (before background subtraction)
     activity_bq_raw = sample.activity.magnitude
     two_sigma_error_bq_raw = activity_bq_raw * two_sigma_percent / 100.0
 
     # Now perform background subtraction and propagate uncertainties
     background_bq = 0.0  # Will be updated below
-    
+
     if background_curve:
         tSIE = float(sample_data["tSIE"])
         background_bq = background_curve(tSIE)
@@ -98,15 +100,19 @@ def create_sample(label: str, filename: str, background_curve=None) -> LSCSample
 
         # Get background activity before subtraction
         background_bq = background_sample.activity.magnitude
-        
+
         # substract background
         sample.substract_background(background_sample)
-    
+
     # Propagate uncertainties: when subtracting, add in quadrature
     # σ_net = √(σ_raw² + σ_background²)
-    two_sigma_error_bq_background = background_bq * BACKGROUND_UNCERTAINTY_PERCENT / 100.0
-    two_sigma_error_bq_net = np.sqrt(two_sigma_error_bq_raw**2 + two_sigma_error_bq_background**2)
-    
+    two_sigma_error_bq_background = (
+        background_bq * BACKGROUND_UNCERTAINTY_PERCENT / 100.0
+    )
+    two_sigma_error_bq_net = np.sqrt(
+        two_sigma_error_bq_raw**2 + two_sigma_error_bq_background**2
+    )
+
     # Store the final error (after background subtraction) in the global dictionary
     all_sample_errors[label] = two_sigma_error_bq_net
 
@@ -129,13 +135,13 @@ def get_row_by_label(reader: LSCFileReader, label: str) -> dict:
 
 def substract_scalar_background(sample: LSCSample, background_bq: float) -> None:
     if sample.background_substracted:
-            raise ValueError("Background already substracted")
+        raise ValueError("Background already substracted")
     sample.activity -= background_bq * ureg.Bq
-    if sample.activity.magnitude < 0.07: # MDA Correction
+    if sample.activity.magnitude < 0.07:  # MDA Correction
         warnings.warn(
             f"Activity of {sample.name} is negative after substracting background. Setting to zero."
         )
-        sample.activity = sample.activity # 0 * ureg.Bq
+        sample.activity = sample.activity  # 0 * ureg.Bq
     sample.background_substracted = True
 
 
@@ -151,7 +157,9 @@ def build_background_curve_from_file(reader: LSCFileReader, blank_labels: list[s
         tSIE_values.append(tSIE)
         Bq_values.append(Bq)
 
-    interpolator = interp1d(tSIE_values, Bq_values, bounds_error=False, fill_value="extrapolate")
+    interpolator = interp1d(
+        tSIE_values, Bq_values, bounds_error=False, fill_value="extrapolate"
+    )
     return interpolator
 
 
@@ -218,9 +226,9 @@ assert len(np.unique(all_quench)) == 1
 for stream in run.streams:
     for sample in stream.samples:
         for lsc_vial in sample.samples:
-            assert (
-                lsc_vial.background_substracted
-            ), f"Background not substracted for {sample}"
+            assert lsc_vial.background_substracted, (
+                f"Background not substracted for {sample}"
+            )
 
 IV_stream = gas_streams["IV"]
 OV_stream = gas_streams["OV"]
@@ -235,13 +243,16 @@ replacement_times_walls = sampling_times["OV"]
 
 # read cover gas change times
 cover_gas_switch_deltatimes = []
-if "switched_to" in general_data["cover_gas"] and general_data["cover_gas"]["switched_to"]:
+if (
+    "switched_to" in general_data["cover_gas"]
+    and general_data["cover_gas"]["switched_to"]
+):
     switched_to_list = general_data["cover_gas"]["switched_to"]
-    
+
     # Handle both old format (single dict) and new format (list of dicts)
     if isinstance(switched_to_list, dict):
         switched_to_list = [switched_to_list]
-    
+
     for gas_switch in switched_to_list:
         if gas_switch.get("gas_switch_time"):
             gas_switch_time = datetime.strptime(
@@ -254,13 +265,16 @@ if "switched_to" in general_data["cover_gas"] and general_data["cover_gas"]["swi
 
 # read secondary gas change times
 secondary_gas_switch_deltatimes = []
-if "switched_to" in general_data["secondary_gas"] and general_data["secondary_gas"]["switched_to"]:
+if (
+    "switched_to" in general_data["secondary_gas"]
+    and general_data["secondary_gas"]["switched_to"]
+):
     switched_to_list = general_data["secondary_gas"]["switched_to"]
-    
+
     # Handle both old format (single dict) and new format (list of dicts)
     if isinstance(switched_to_list, dict):
         switched_to_list = [switched_to_list]
-    
+
     for gas_switch in switched_to_list:
         if gas_switch.get("gas_switch_time"):
             gas_switch_time = datetime.strptime(
@@ -299,8 +313,11 @@ for generator in general_data["generators"]:
 
 # Neutron rate
 
-
-neutron_rate = 1.3e09 * ureg.neutron * ureg.s**-1 # based on manufacturer test data for generator settings
+# TODO replace by neutron rate measured with HPGe
+neutron_rate = (
+    2.85e8 * ureg.neutron * ureg.s**-1
+    # 1.3e09 * ureg.neutron * ureg.s**-1
+)  # based on manufacturer test data for generator settings
 neutron_rate_uncertainty = 4.9e06 * ureg.neutron * ureg.s**-1
 neutron_rate_relative_uncertainty = (neutron_rate_uncertainty / neutron_rate).to(
     ureg.dimensionless
@@ -333,10 +350,12 @@ T_consumed = neutron_rate * total_irradiation_time
 
 # to calculate the measured TBR we ignore the last samples for which
 # we have some contribution from other sources (nGen, cyclotron, etc.)
-nb_samples_included_iv = len(IV_stream.samples)
-T_produced_IV = IV_stream.get_cumulative_activity("total")[nb_samples_included_iv - 1]
+T_produced_IV = IV_stream.get_cumulative_activity("total")[-1]
+T_produced_OV = OV_stream.get_cumulative_activity("total")[-1]
 
-measured_TBR = (T_produced_IV / quantity_to_activity(T_consumed)).to(
+print(T_produced_IV, T_produced_OV)
+
+measured_TBR = ((T_produced_IV + T_produced_OV) / quantity_to_activity(T_consumed)).to(
     ureg.particle * ureg.neutron**-1
 )
 
@@ -442,57 +461,59 @@ print(f"Processed data stored in {processed_data_file}")
 # ERROR PROPAGATION CLASSES AND METHODS
 # ============================================================================
 
+
 class GasStreamWithErrors:
     """
     Wrapper class for GasStream that adds error tracking and propagation.
     """
+
     def __init__(self, gas_stream: GasStream, stream_label: str):
         self.gas_stream = gas_stream
         self.stream_label = stream_label
         self._error_cache = {}
-        
+
     def get_cumulative_activity(self, form: str = "total"):
         """
         Get cumulative activity (same as original GasStream method).
-        
+
         Args:
             form: "total", "soluble", or "insoluble"
-            
+
         Returns:
             Cumulative activity as a pint Quantity array
         """
         return self.gas_stream.get_cumulative_activity(form)
-    
+
     def get_cumulative_activity_errors(self, form: str = "total"):
         """
         Calculate errors for cumulative activity at each sampling point.
-        
+
         For cumulative sums, errors propagate in quadrature:
         σ_sum = sqrt(σ₁² + σ₂² + ... + σₙ²)
-        
+
         Individual samples are stored with 2sigma errors, which are converted to
         the desired confidence interval set by DESIRED_CONFIDENCE_INTERVAL.
-        
+
         Args:
             form: "total", "soluble", or "insoluble"
-            
+
         Returns:
             Array of errors in Bq for each cumulative point at the desired confidence level
         """
         cache_key = f"{form}_{DESIRED_CONFIDENCE_INTERVAL}"
         if cache_key in self._error_cache:
             return self._error_cache[cache_key]
-        
+
         # Calculate conversion factor from 2sigma to desired confidence interval
         # All stored errors are 2sigma, so convert: 1sigma = 2sigma / 2
         # Then multiply by the desired confidence factor
         two_sigma_factor = CONFIDENCE_INTERVALS["95.45%"]  # = 2.0
         desired_factor = CONFIDENCE_INTERVALS[DESIRED_CONFIDENCE_INTERVAL]
         conversion_factor = desired_factor / two_sigma_factor
-        
+
         cumulative_errors = []
         squared_errors_sum = 0.0
-        
+
         # Iterate through all samples in the stream
         for libra_sample in self.gas_stream.samples:
             # Each LIBRASample contains multiple LSCSample vials
@@ -503,23 +524,25 @@ class GasStreamWithErrors:
                     error_bq_2sigma = all_sample_errors[sample_label]
                     # Convert from 2sigma to desired confidence interval
                     error_bq_desired = error_bq_2sigma * conversion_factor
-                    squared_errors_sum += error_bq_desired ** 2
+                    squared_errors_sum += error_bq_desired**2
                 else:
-                    warnings.warn(f"No error found for sample {sample_label}, assuming 0")
-            
+                    warnings.warn(
+                        f"No error found for sample {sample_label}, assuming 0"
+                    )
+
             # After processing all vials in this LIBRA sample, compute cumulative error
             cumulative_error = np.sqrt(squared_errors_sum)
             cumulative_errors.append(cumulative_error)
-        
+
         cumulative_errors = np.array(cumulative_errors)
         self._error_cache[cache_key] = cumulative_errors
-        
+
         return cumulative_errors
-    
+
     @property
     def samples(self):
         return self.gas_stream.samples
-    
+
     @property
     def relative_times_as_pint(self):
         return self.gas_stream.relative_times_as_pint
