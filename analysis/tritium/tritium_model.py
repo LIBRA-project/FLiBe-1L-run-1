@@ -93,7 +93,7 @@ def substract_scalar_background(sample: LSCSample, background_bq: float) -> None
         warnings.warn(
             f"Activity of {sample.name} is negative after substracting background. Setting to zero."
         )
-        sample.activity = 0 * ureg.Bq
+#        sample.activity = 0 * ureg.Bq
     sample.background_substracted = True
 
 
