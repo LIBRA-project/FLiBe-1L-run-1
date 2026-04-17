@@ -64,6 +64,11 @@
                     "value": 750,
                     "unit": "C",
                     "set_time": "12/10/2025 10:20"
+                },
+                {
+                    "value": 22,
+                    "unit": "C",
+                    "set_time": "1/28/2026 20:46"
                 }
             ],
             "logs": {
@@ -117,6 +122,11 @@
                 "value": 30,
                 "unit": "SCCM",
                 "set_time": "12/28/2025 16:35"
+            },
+            {
+                "value": 0,
+                "unit": "SCCM",
+                "set_time": "1/30/2026 21:50"
             }
         ],
         "flow_rate_air": {
@@ -133,6 +143,21 @@
                 "type": "He",
                 "gas_switch_time": "12/28/2025 16:35",
                 "notes": "Resumed pure He flow through IV after emptying and purging the H2 manifold and line"
+            },
+            {
+                "type": "He + 10 PPM H2",
+                "gas_switch_time": "1/6/2026 19:05",
+                "notes": "Mixed 0.1 SCCM of 3.65% H2 into 29.9 SCCM of He in IV stream through vessel"
+            },
+            {
+                "type": "He + 100 PPM H2",
+                "gas_switch_time": "1/10/2026 16:45",
+                "notes": "Mixed 1 SCCM of 3.65% H2 into 29 SCCM of He in IV stream through vessel"
+            },
+            {
+                "type": "He",
+                "gas_switch_time": "1/12/2026 19:05",
+                "notes": "Resumed pure He flow through IV after depresurizing H2 manidfold"
             }
         ]
     },
@@ -187,6 +212,11 @@
                 "value": 50,
                 "unit": "SCCM",
                 "set_time": "12/21/2025 16:25"
+            },
+            {
+                "value": 0,
+                "unit": "SCCM",
+                "set_time": "1/30/2026 21:50"
             }
         ],
         "flow_rate_air": {
@@ -295,10 +325,10 @@
         "run_start": "11/19/2025 11:20"
     },
     "tritium_blank_set": {
-        "filename": "SLR_BLANK_SCAN.csv",
+        "filename": "1L-FLB_BLANKS_500MIN_RE.csv",
         "parameter": "tSIE",
         "blanks": {
-            "SLR_BL2": {
+            "FLB_BL-2": {
                 "water_volume": {
                     "value": 2,
                     "unit": "ml"
@@ -308,7 +338,7 @@
                     "unit": "ml"
                 }
             },
-            "SLR_BL4": {
+            "FLB_BL-4": {
                 "water_volume": {
                     "value": 4,
                     "unit": "ml"
@@ -318,7 +348,7 @@
                     "unit": "ml"
                 }
             },
-            "SLR_BL6": {
+            "FLB_BL-6": {
                 "water_volume": {
                     "value": 6,
                     "unit": "ml"
@@ -328,7 +358,7 @@
                     "unit": "ml"
                 }
             },
-            "SLR_BL8": {
+            "FLB_BL-8": {
                 "water_volume": {
                     "value": 8,
                     "unit": "ml"
@@ -338,7 +368,7 @@
                     "unit": "ml"
                 }
             },
-            "SLR_BL9": {
+            "FLB_BL-9": {
                 "water_volume": {
                     "value": 9,
                     "unit": "ml"
@@ -348,7 +378,7 @@
                     "unit": "ml"
                 }
             },
-            "SLR_BL10": {
+            "FLB_BL-10": {
                 "water_volume": {
                     "value": 10,
                     "unit": "ml"
@@ -358,9 +388,19 @@
                     "unit": "ml"
                 }
             },
-            "SLR_BL11": {
+            "FLB_BL-11": {
                 "water_volume": {
                     "value": 11,
+                    "unit": "ml"
+                },
+                "scint_volume": {
+                    "value": 10,
+                    "unit": "ml"
+                }
+            },
+            "FLB_BL-12": {
+                "water_volume": {
+                    "value": 12,
                     "unit": "ml"
                 },
                 "scint_volume": {
@@ -781,6 +821,36 @@
                     "3": "RE_1L-FLB_IV_1-25-4_1-26_THRU_1-41.csv",
                     "4": "RE_1L-FLB_IV_1-25-4_1-26_THRU_1-41.csv"
                 }
+            },
+            "41": {
+                "planned_sample_time": "1/23/2026 11:20",
+                "actual_sample_time": "1/23/2026 17:00",
+                "lsc_vials_filenames": {
+                    "1": "RE_1L-FLB_IV_1-25-4_1-26_THRU_1-41.csv",
+                    "2": "RE_1L-FLB_IV_1-25-4_1-26_THRU_1-41.csv",
+                    "3": "RE_1L-FLB_IV_1-25-4_1-26_THRU_1-41.csv",
+                    "4": "RE_1L-FLB_IV_1-25-4_1-26_THRU_1-41.csv"
+                }
+            },
+            "42": {
+                "planned_sample_time": "1/28/2026 11:20",
+                "actual_sample_time": "1/28/2026 20:20",
+                "lsc_vials_filenames": {
+                    "1": "RE_1L-FLB_IV_1-42_1-43.csv",
+                    "2": "RE_1L-FLB_IV_1-42_1-43.csv",
+                    "3": "RE_1L-FLB_IV_1-42_1-43.csv",
+                    "4": "RE_1L-FLB_IV_1-42_1-43.csv"
+                }
+            },
+            "43": {
+                "planned_sample_time": "1/30/2026 11:20",
+                "actual_sample_time": "1/30/2026 12:35",
+                "lsc_vials_filenames": {
+                    "1": "RE_1L-FLB_IV_1-42_1-43.csv",
+                    "2": "RE_1L-FLB_IV_1-42_1-43.csv",
+                    "3": "RE_1L-FLB_IV_1-42_1-43.csv",
+                    "4": "RE_1L-FLB_IV_1-42_1-43.csv"
+                }
             }
         },
         "OV": {
@@ -947,6 +1017,16 @@
             "16": {
                 "planned_sample_time": "1/19/2026 11:20",
                 "actual_sample_time": "1/19/2026 15:30",
+                "lsc_vials_filenames": {
+                    "1": "RE_1L-FLB_OV_1-5_THRU_1-17.csv",
+                    "2": "RE_1L-FLB_OV_1-5_THRU_1-17.csv",
+                    "3": "RE_1L-FLB_OV_1-5_THRU_1-17.csv",
+                    "4": "RE_1L-FLB_OV_1-5_THRU_1-17.csv"
+                }
+            },
+            "17": {
+                "planned_sample_time": "1/30/2026 11:20",
+                "actual_sample_time": "1/30/2026 12:35",
                 "lsc_vials_filenames": {
                     "1": "RE_1L-FLB_OV_1-5_THRU_1-17.csv",
                     "2": "RE_1L-FLB_OV_1-5_THRU_1-17.csv",

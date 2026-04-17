@@ -9,8 +9,7 @@ dependencies:
   - scipy # add version tag
   - matplotlib # add version tag
   - sympy
-  - pandas
-  - pint-pandas
+  - pandas<3
   - nbconvert
   - ipykernel
   - pint

@@ -184,14 +184,21 @@ def load_temperature_data(temp_csv_path=None, general_json_path=None):
             - 'start_time': experiment start time
     """
     # Default paths
-    if temp_csv_path is None:
-        temp_csv_path = "../../data/temperature/processed/FLiBe_1L_run_1_temp.csv"
     if general_json_path is None:
         general_json_path = "../../data/general.json"
     
     # Load general.json for metadata
     with open(general_json_path, 'r') as f:
         general_data = json.load(f)
+
+    if temp_csv_path is None:
+        run_nb = general_data['general_data']['run_nb']
+        temp_csv_path = (
+            Path(general_json_path).parent
+            / "temperature"
+            / "processed"
+            / f"FLiBe_1L_run_{run_nb}_temp.csv"
+        )
     
     # Get start time
     start_time_str = general_data['timestamps']['run_start']

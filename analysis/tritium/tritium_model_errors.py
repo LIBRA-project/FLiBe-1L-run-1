@@ -21,7 +21,7 @@ all_quench = []
 all_sample_errors = {}
 
 # Background uncertainty (2sigma as a fraction)
-BACKGROUND_UNCERTAINTY_PERCENT = 20.0  # 20% 2sigma uncertainty on background
+BACKGROUND_UNCERTAINTY_PERCENT = 5.0  # 20% 2sigma uncertainty on background
 
 # Confidence interval conversion factors (multiply 1-sigma by these values)
 # All internal calculations use 2sigma (95.45%), then convert to desired confidence level
@@ -36,7 +36,7 @@ CONFIDENCE_INTERVALS = {
 
 # Set your desired confidence interval here
 DESIRED_CONFIDENCE_INTERVAL = (
-    "99.7%"  # Change this to adjust error bar confidence level
+    "95.45%"  # Change this to adjust error bar confidence level
 )
 
 
@@ -233,6 +233,123 @@ for stream in run.streams:
 IV_stream = gas_streams["IV"]
 OV_stream = gas_streams["OV"]
 
+
+# ============================================================================
+# ERROR PROPAGATION CLASSES AND METHODS
+# ============================================================================
+
+
+class GasStreamWithErrors:
+    """
+    Wrapper class for GasStream that adds error tracking and propagation.
+    """
+
+    def __init__(self, gas_stream: GasStream, stream_label: str):
+        self.gas_stream = gas_stream
+        self.stream_label = stream_label
+        self._error_cache = {}
+
+    def get_cumulative_activity(self, form: str = "total"):
+        """
+        Get cumulative activity (same as original GasStream method).
+
+        Args:
+            form: "total", "soluble", or "insoluble"
+
+        Returns:
+            Cumulative activity as a pint Quantity array
+        """
+        return self.gas_stream.get_cumulative_activity(form)
+
+    def get_cumulative_activity_errors(self, form: str = "total"):
+        """
+        Calculate errors for cumulative activity at each sampling point.
+
+        For cumulative sums, errors propagate in quadrature:
+        σ_sum = sqrt(σ₁² + σ₂² + ... + σₙ²)
+
+        Individual samples are stored with 2sigma errors, which are converted to
+        the desired confidence interval set by DESIRED_CONFIDENCE_INTERVAL.
+
+        Args:
+            form: "total", "soluble", or "insoluble"
+
+        Returns:
+            Array of errors in Bq for each cumulative point at the desired confidence level
+        """
+        cache_key = f"{form}_{DESIRED_CONFIDENCE_INTERVAL}"
+        if cache_key in self._error_cache:
+            return self._error_cache[cache_key]
+
+        # Calculate conversion factor from 2sigma to desired confidence interval
+        # All stored errors are 2sigma, so convert: 1sigma = 2sigma / 2
+        # Then multiply by the desired confidence factor
+        two_sigma_factor = CONFIDENCE_INTERVALS["95.45%"]  # = 2.0
+        desired_factor = CONFIDENCE_INTERVALS[DESIRED_CONFIDENCE_INTERVAL]
+        conversion_factor = desired_factor / two_sigma_factor
+
+        cumulative_errors = []
+        squared_errors_sum = 0.0
+
+        # Iterate through all samples in the stream
+        for libra_sample in self.gas_stream.samples:
+            # Each LIBRASample contains multiple LSCSample vials
+            # First two vials (indices 0, 1) are soluble
+            # Third and fourth vials (indices 2, 3) are insoluble
+            for vial_index, lsc_sample in enumerate(libra_sample.samples):
+                # Determine if this vial should be included based on form
+                include_vial = False
+                if form == "total":
+                    include_vial = True
+                elif form == "soluble" and vial_index in [0, 1]:
+                    include_vial = True
+                elif form == "insoluble" and vial_index in [2, 3]:
+                    include_vial = True
+                
+                if not include_vial:
+                    continue
+                
+                # Find the error for this specific sample
+                sample_label = lsc_sample.name
+                if sample_label in all_sample_errors:
+                    error_bq_2sigma = all_sample_errors[sample_label]
+                    # Convert from 2sigma to desired confidence interval
+                    error_bq_desired = error_bq_2sigma * conversion_factor
+                    squared_errors_sum += error_bq_desired**2
+                else:
+                    warnings.warn(
+                        f"No error found for sample {sample_label}, assuming 0"
+                    )
+
+            # After processing all vials in this LIBRA sample, compute cumulative error
+            cumulative_error = np.sqrt(squared_errors_sum)
+            cumulative_errors.append(cumulative_error)
+
+        cumulative_errors = np.array(cumulative_errors)
+        self._error_cache[cache_key] = cumulative_errors
+
+        return cumulative_errors
+
+    @property
+    def samples(self):
+        return self.gas_stream.samples
+
+    @property
+    def relative_times_as_pint(self):
+        return self.gas_stream.relative_times_as_pint
+
+
+# Create error-aware wrappers for the gas streams
+IV_stream_with_errors = GasStreamWithErrors(IV_stream, "IV")
+OV_stream_with_errors = GasStreamWithErrors(OV_stream, "OV")
+
+# Also create a combined wrapper dictionary for convenience
+gas_streams_with_errors = {
+    "IV": IV_stream_with_errors,
+    "OV": OV_stream_with_errors,
+}
+
+
 sampling_times = {
     "IV": sorted(IV_stream.relative_times_as_pint),
     "OV": sorted(OV_stream.relative_times_as_pint),
@@ -353,10 +470,25 @@ T_consumed = neutron_rate * total_irradiation_time
 T_produced_IV = IV_stream.get_cumulative_activity("total")[-1]
 T_produced_OV = OV_stream.get_cumulative_activity("total")[-1]
 
+T_produced_IV_error = IV_stream_with_errors.get_cumulative_activity_errors("total")[-1]
+T_produced_OV_error = OV_stream_with_errors.get_cumulative_activity_errors("total")[-1]
+
 print(T_produced_IV, T_produced_OV)
+print(T_produced_IV_error, T_produced_OV_error)
 
 measured_TBR = ((T_produced_IV + T_produced_OV) / quantity_to_activity(T_consumed)).to(
     ureg.particle * ureg.neutron**-1
+)
+
+# Calculate total tritium produced and its error (sum in quadrature)
+T_produced_total = T_produced_IV + T_produced_OV
+T_produced_total_error = np.sqrt(T_produced_IV_error**2 + T_produced_OV_error**2)
+
+# For measured_TBR = T_produced / T_consumed, propagate errors in quadrature
+# Relative error: σ_TBR/TBR = sqrt((σ_T_produced/T_produced)² + (σ_T_consumed/T_consumed)²)
+measured_TBR_error = measured_TBR * np.sqrt(
+    (T_produced_total_error / T_produced_total.magnitude) ** 2
+    + neutron_rate_relative_uncertainty.magnitude ** 2
 )
 
 # Run 1 transport coeff and measured TBR for overlay
@@ -455,105 +587,3 @@ with open(processed_data_file, "w") as f:
     json.dump(existing_data, f, indent=4)
 
 print(f"Processed data stored in {processed_data_file}")
-
-
-# ============================================================================
-# ERROR PROPAGATION CLASSES AND METHODS
-# ============================================================================
-
-
-class GasStreamWithErrors:
-    """
-    Wrapper class for GasStream that adds error tracking and propagation.
-    """
-
-    def __init__(self, gas_stream: GasStream, stream_label: str):
-        self.gas_stream = gas_stream
-        self.stream_label = stream_label
-        self._error_cache = {}
-
-    def get_cumulative_activity(self, form: str = "total"):
-        """
-        Get cumulative activity (same as original GasStream method).
-
-        Args:
-            form: "total", "soluble", or "insoluble"
-
-        Returns:
-            Cumulative activity as a pint Quantity array
-        """
-        return self.gas_stream.get_cumulative_activity(form)
-
-    def get_cumulative_activity_errors(self, form: str = "total"):
-        """
-        Calculate errors for cumulative activity at each sampling point.
-
-        For cumulative sums, errors propagate in quadrature:
-        σ_sum = sqrt(σ₁² + σ₂² + ... + σₙ²)
-
-        Individual samples are stored with 2sigma errors, which are converted to
-        the desired confidence interval set by DESIRED_CONFIDENCE_INTERVAL.
-
-        Args:
-            form: "total", "soluble", or "insoluble"
-
-        Returns:
-            Array of errors in Bq for each cumulative point at the desired confidence level
-        """
-        cache_key = f"{form}_{DESIRED_CONFIDENCE_INTERVAL}"
-        if cache_key in self._error_cache:
-            return self._error_cache[cache_key]
-
-        # Calculate conversion factor from 2sigma to desired confidence interval
-        # All stored errors are 2sigma, so convert: 1sigma = 2sigma / 2
-        # Then multiply by the desired confidence factor
-        two_sigma_factor = CONFIDENCE_INTERVALS["95.45%"]  # = 2.0
-        desired_factor = CONFIDENCE_INTERVALS[DESIRED_CONFIDENCE_INTERVAL]
-        conversion_factor = desired_factor / two_sigma_factor
-
-        cumulative_errors = []
-        squared_errors_sum = 0.0
-
-        # Iterate through all samples in the stream
-        for libra_sample in self.gas_stream.samples:
-            # Each LIBRASample contains multiple LSCSample vials
-            for lsc_sample in libra_sample.samples:
-                # Find the error for this specific sample
-                sample_label = lsc_sample.name
-                if sample_label in all_sample_errors:
-                    error_bq_2sigma = all_sample_errors[sample_label]
-                    # Convert from 2sigma to desired confidence interval
-                    error_bq_desired = error_bq_2sigma * conversion_factor
-                    squared_errors_sum += error_bq_desired**2
-                else:
-                    warnings.warn(
-                        f"No error found for sample {sample_label}, assuming 0"
-                    )
-
-            # After processing all vials in this LIBRA sample, compute cumulative error
-            cumulative_error = np.sqrt(squared_errors_sum)
-            cumulative_errors.append(cumulative_error)
-
-        cumulative_errors = np.array(cumulative_errors)
-        self._error_cache[cache_key] = cumulative_errors
-
-        return cumulative_errors
-
-    @property
-    def samples(self):
-        return self.gas_stream.samples
-
-    @property
-    def relative_times_as_pint(self):
-        return self.gas_stream.relative_times_as_pint
-
-
-# Create error-aware wrappers for the gas streams
-IV_stream_with_errors = GasStreamWithErrors(IV_stream, "IV")
-OV_stream_with_errors = GasStreamWithErrors(OV_stream, "OV")
-
-# Also create a combined wrapper dictionary for convenience
-gas_streams_with_errors = {
-    "IV": IV_stream_with_errors,
-    "OV": OV_stream_with_errors,
-}
