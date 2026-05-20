@@ -77,7 +77,64 @@
                 "TC2_label": "SIDE TC",
                 "TC3_label": "OV SIDE",
                 "TC4_label": "FURNACE"
-            }
+            },
+            "filter_heaters": [
+                {
+                    "value": 22,
+                    "unit": "C",
+                    "set_time": "11/19/2025 11:20"
+                },
+                {
+                    "value": 70,
+                    "unit": "C",
+                    "set_time": "1/14/2026 18:15"
+                },
+                {
+                    "value": 100,
+                    "unit": "C",
+                    "set_time": "1/15/2026 17:00"
+                },
+                {
+                    "value": 150,
+                    "unit": "C",
+                    "set_time": "1/16/2026 10:45"
+                },
+                {
+                    "value": 200,
+                    "unit": "C",
+                    "set_time": "1/16/2026 14:30"
+                },
+                {
+                    "value": 22,
+                    "unit": "C",
+                    "set_time": "1/19/2026 15:40"
+                },
+                {
+                    "value": 325,
+                    "unit": "C",
+                    "set_time": "1/20/2026 20:25"
+                },
+                {
+                    "value": 22,
+                    "unit": "C",
+                    "set_time": "1/23/2026 13:30"
+                },
+                {
+                    "value": 125,
+                    "unit": "C",
+                    "set_time": "1/24/2026 11:30"
+                },
+                {
+                    "value": 325,
+                    "unit": "C",
+                    "set_time": "1/24/2026 23:55"
+                },
+                {
+                    "value": 22,
+                    "unit": "C",
+                    "set_time": "1/27/2026 19:30"
+                }
+            ]
         },
         "purpose_of_run": "Testing FLiBe irradiation capabilities."
     },
